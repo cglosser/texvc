@@ -38,15 +38,23 @@ let rec render_tex = function
 (* Dynamic loading*)
 type encoding_t = LATIN1 | LATIN2 | UTF8
 
-let modules_ams = ref false
+let modules_ams      = ref false
 let modules_nonascii = ref false
 let modules_encoding = ref UTF8
-let modules_color = ref false
+let modules_color    = ref false
+let modules_physics  = ref false
 
-let tex_use_ams ()     = modules_ams := true
+let tex_use_ams ()      = modules_ams      := true
 let tex_use_nonascii () = modules_nonascii := true
-let tex_use_color ()  = modules_color := true
-let tex_mod_reset ()   = (modules_ams := false; modules_nonascii := false; modules_encoding := UTF8; modules_color := false)
+let tex_use_color ()    = modules_color    := true
+let tex_use_physics ()  = modules_physics  := true
+let tex_mod_reset ()    = (
+  modules_ams      := false;
+  modules_nonascii := false;
+  modules_encoding := UTF8;
+  modules_color    := false;
+  modules_physics  := false;
+)
 
 let get_encoding = function
     UTF8 -> "\\usepackage{ucs}\n\\usepackage[utf8]{inputenc}\n"
@@ -55,8 +63,9 @@ let get_encoding = function
 
 let get_preface ()  = "\\nonstopmode\n\\documentclass[12pt]{article}\n" ^
               (if !modules_nonascii then get_encoding !modules_encoding else "") ^
-              (if !modules_ams then "\\usepackage{amsmath}\n\\usepackage{amsfonts}\n\\usepackage{amssymb}\n" else "") ^
-              (if !modules_color then "\\usepackage[dvips,usenames]{color}\n" else "") ^
+              (if !modules_ams      then "\\usepackage{amsmath}\n\\usepackage{amsfonts}\n\\usepackage{amssymb}\n" else "") ^
+              (if !modules_color    then "\\usepackage[dvips,usenames]{color}\n" else "") ^
+              (if !modules_physics  then "\\usepackage{physics}\n" else "") ^
               "\\usepackage{cancel}\n\\pagestyle{empty}\n\\begin{document}\n$$\n"
 let get_footer  ()  = "\n$$\n\\end{document}\n"
 
@@ -733,4 +742,24 @@ let find = function
     | "\\vbox"             -> raise (Failure "malformatted \\vbox")
     | "\\hbox"             -> raise (Failure "malformatted \\hbox")
     | "\\color"            -> (tex_use_color (); LITERAL (TEX_ONLY "\\color"))
-    | s                    -> raise (Illegal_tex_function s)
+    | "\\abs"       -> (tex_use_physics (); FUN_AR1 "\\abs ")
+    | "\\norm"      -> (tex_use_physics (); FUN_AR1 "\\norm ")
+    | "\\order"     -> (tex_use_physics (); FUN_AR1 "\\order ")
+    | "\\comm"      -> (tex_use_physics (); FUN_AR2 "\\comm ")
+    | "\\acomm"     -> (tex_use_physics (); FUN_AR2 "\\acomm ")
+    | "\\pb"        -> (tex_use_physics (); FUN_AR2 "\\pb ")
+    | "\\vb"        -> (tex_use_physics (); FUN_AR1 "\\vb ")
+    | "\\va"        -> (tex_use_physics (); FUN_AR1 "\\va ")
+    | "\\vu"        -> (tex_use_physics (); FUN_AR1 "\\vu ")
+    | "\\grad"      -> (tex_use_physics (); FUN_AR1 "\\grad ")
+    | "\\div"       -> (tex_use_physics (); FUN_AR1 "\\div ")
+    | "\\curl"      -> (tex_use_physics (); FUN_AR1 "\\curl ")
+    | "\\laplacian" -> (tex_use_physics (); FUN_AR1 "\\laplacian ")
+    | "\\dd"        -> (tex_use_physics (); FUN_AR1 "\\dd ")
+    | "\\dv"        -> (tex_use_physics (); FUN_AR2 "\\dv ")
+    | "\\pdv"       -> (tex_use_physics (); FUN_AR2 "\\pdv ")
+    | "\\ket"       -> (tex_use_physics (); FUN_AR1 "\\ket ")
+    | "\\bra"       -> (tex_use_physics (); FUN_AR1 "\\bra ")
+    | "\\braket"    -> (tex_use_physics (); FUN_AR2 "\\braket ")
+    | "\\dyad"      -> (tex_use_physics (); FUN_AR2 "\\dyad ")
+    | s                     -> raise (Illegal_tex_function s)
